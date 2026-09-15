@@ -172,13 +172,76 @@ enum Scaffold
     try fm.createSymbolicLink(atPath: link, withDestinationPath: target)
   }
 
+  /// symlinks the TF_REGISTRY_FUNCTION/SWIFTUSD_PLUGIN macro plugin sources.
+  static func symlinkMacroImplementations() throws
+  {
+    let fm = FileManager.default
+    let link = "\(Paths.splitPackage)/Sources/_OpenUSD_MacroImplementations"
+    let target = "\(Paths.swiftUsdRoot)/swift-package/Sources/_OpenUSD_MacroImplementations"
+    try fm.createDirectory(atPath: "\(Paths.splitPackage)/Sources", withIntermediateDirectories: true)
+    if fm.fileExists(atPath: link) || isSymlink(link) { try? fm.removeItem(atPath: link) }
+    try fm.createSymbolicLink(atPath: link, withDestinationPath: target)
+  }
+
+  /// symlinks the SPM plugin targets.
+  static func symlinkPlugins() throws
+  {
+    let fm = FileManager.default
+    let link = "\(Paths.splitPackage)/Plugins"
+    let target = "\(Paths.swiftUsdRoot)/swift-package/Plugins"
+    if fm.fileExists(atPath: link) || isSymlink(link) { try? fm.removeItem(atPath: link) }
+    try fm.createSymbolicLink(atPath: link, withDestinationPath: target)
+  }
+
+  /// mirrors the two hioPpm example SPM packages, symlinking
+  /// every entry except SwiftUsd/Package.resolved/.swiftpm.
+  static func symlinkExamples() throws
+  {
+    let fm = FileManager.default
+    let srcParent = "\(Paths.swiftUsdRoot)/Examples/Plugins/HioImage"
+    guard fm.fileExists(atPath: srcParent) else { return }
+    let dstParent = "\(Paths.splitPackage)/Examples/Plugins/HioImage"
+    try fm.createDirectory(atPath: dstParent, withIntermediateDirectories: true)
+
+    let packages = ["hioPpm_Swift", "hioPpm_Cxx"]
+    let skip = Set([".DS_Store"] + packages)
+    for entry in try fm.contentsOfDirectory(atPath: srcParent).sorted() where !skip.contains(entry)
+    {
+      let link = "\(dstParent)/\(entry)"
+      if fm.fileExists(atPath: link) || isSymlink(link) { try? fm.removeItem(atPath: link) }
+      try fm.createSymbolicLink(atPath: link, withDestinationPath: "\(srcParent)/\(entry)")
+    }
+
+    let pkgSkip: Set<String> = ["SwiftUsd", "Package.resolved", ".swiftpm", ".DS_Store"]
+    for pkg in packages
+    {
+      let srcPkg = "\(srcParent)/\(pkg)"
+      guard fm.fileExists(atPath: srcPkg) else { continue }
+      try? fm.removeItem(atPath: "\(dstParent)/\(pkg)")
+      try fm.createDirectory(atPath: "\(dstParent)/\(pkg)", withIntermediateDirectories: true)
+      for entry in try fm.contentsOfDirectory(atPath: srcPkg).sorted() where !pkgSkip.contains(entry)
+      {
+        let link = "\(dstParent)/\(pkg)/\(entry)"
+        try fm.createSymbolicLink(atPath: link, withDestinationPath: "\(srcPkg)/\(entry)")
+      }
+      try fm.createSymbolicLink(atPath: "\(dstParent)/\(pkg)/SwiftUsd", withDestinationPath: Paths.splitPackage)
+    }
+  }
+
   static func writePackageSwift() throws
   {
+    // every module gets the macro target + its two swift-syntax products,
+    // since classifyHandFiles decides at runtime which domain ends up hosting
+    // PluginAndTfMacros.swift's `#externalMacro(...)` declarations.
+    let macroDeps = ["\"_OpenUSD_MacroImplementations\"",
+                      ".product(name: \"SwiftSyntaxMacros\", package: \"swift-syntax\")",
+                      ".product(name: \"SwiftCompilerPlugin\", package: \"swift-syntax\")"]
+
     var targets: [String] = []
     for (i, top) in TOPS.enumerated()
     {
       let parents = Array(TOPS.prefix(i))
-      let deps = (["\"_OpenUSD_SwiftBindingHelpers\""] + parents.map { "\"\($0)\"" }).joined(separator: ", ")
+      let deps = (["\"_OpenUSD_SwiftBindingHelpers\""] + macroDeps + parents.map { "\"\($0)\"" }).joined(separator: ", ")
       targets.append("""
                 .target(name: "\(top)",
                         dependencies: [\(deps)],
@@ -198,6 +261,14 @@ enum Scaffold
                               .interoperabilityMode(.Cxx),
                               .define("OPENUSD_SWIFT_BUILD_FROM_CLI")
                           ])
+      """)
+    targets.append("""
+                  .macro(name: "_OpenUSD_MacroImplementations",
+                          dependencies: [
+                              .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                              .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
+                          ],
+                          path: "Sources/_OpenUSD_MacroImplementations")
       """)
     let xcframeworks = try Xcframeworks.macOSEntries()
     let cxxDepsBlock = xcframeworks.map { "                                \"\($0.target)\"" }.joined(separator: ",\n")
@@ -224,18 +295,36 @@ enum Scaffold
                               .define("OPENUSD_SWIFT_BUILD_FROM_CLI")
                           ])
       """)
+    targets.append("""
+                  .plugin(name: "generate-plug-info-json",
+                          capability: .buildTool(),
+                          path: "Plugins/generate-plug-info-json")
+      """)
+    targets.append("""
+                  .plugin(name: "build-vanilla-openusd-plugin",
+                          capability: .command(
+                              intent: .custom(verb: "build-vanilla-openusd-plugin", description: "Builds an OpenUSD plugin for use with vanilla OpenUSD installs")
+                          ),
+                          path: "Plugins/build-vanilla-openusd-plugin")
+      """)
     let manifest = """
       // swift-tools-version: 6.1
       // Split-OpenUSD benchmark package: layered Swift targets over a shared
       // monolithic C++ module, re-exported through an umbrella `OpenUSD` target.
       // Generated by swiftusd-split - do not hand-edit.
       import PackageDescription
+      import CompilerPluginSupport
 
       let package = Package(
           name: "\(Paths.packageName)",
           platforms: [.macOS(.v14)],
           products: [
-              .library(name: "OpenUSD", targets: ["OpenUSD"])
+              .library(name: "OpenUSD", targets: ["OpenUSD"]),
+              .plugin(name: "build-vanilla-openusd-plugin", targets: ["build-vanilla-openusd-plugin"]),
+              .plugin(name: "generate-plug-info-json", targets: ["generate-plug-info-json"])
+          ],
+          dependencies: [
+              .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0-latest"..."603.0.0")
           ],
           targets: [
       \(targets.joined(separator: ",\n"))
@@ -329,6 +418,9 @@ enum Scaffold
   {
     reporter.section("Scaffolding (Package.swift, Preamble.swift, hand-written file placement)")
     try symlinkLibraries()
+    try symlinkMacroImplementations()
+    try symlinkPlugins()
+    try symlinkExamples()
     try writePackageSwift()
     let xcframeworkCount = (try? Xcframeworks.macOSEntries().count) ?? 0
     Term.ok("wrote Package.swift (\(TOPS.count) domain targets + umbrella + \(xcframeworkCount) xcframework deps, linear dependency chain)")
