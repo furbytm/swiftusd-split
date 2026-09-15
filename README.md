@@ -1,4 +1,4 @@
-splits an `apple/swiftusd` checkout into top level `pxr` modules for faster compilation and reduced memory usage.
+##### splits an `apple/swiftusd` checkout into top level `pxr` modules for faster compilation and reduced memory usage.
 
 ```pwsh
 git clone https://github.com/apple/SwiftUsd.git
@@ -8,5 +8,5 @@ cd swiftusd-split
 swift build
 cd ..
 
-swiftusd-split/.build/debug/swiftusd-split SwiftUsd --to ModularSwiftUsd
+swiftusd-split/.build/debug/swiftusd-split ./SwiftUsd --to ./ModularSwiftUsd
 ```
