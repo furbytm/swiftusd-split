@@ -28,13 +28,13 @@ Vanilla trial 1: nGB, (970s) 16m:10s
 
 ###### M1 Max (10 core) MacBook Pro with 64 GB memory, macOS 26.5 (25F71), Xcode 26.5 (17F42), Xcode GUI
 ```swift
-Modular trial 1: 2.49GB, (239s) 3m:59s
-Modular trial 2: 2.62GB, (189s) 3m:9s
-Modular trial 3: 2.58GB, (189s) 3m:9s
-Modular trial 4: 2.54GB, (185s) 3m:5s
+Modular trial 1: 2.77 GB, (355s) 5m:55s
+Modular trial 2: 2.57 GB, (197s) 3m:17s
+Modular trial 3: 2.60 GB, (202s) 3m:22s
+Modular trial 4: 2.61 GB, (201s) 3m:21s
 
-Vanilla trial 1: 3.6GGB, (184s) 3m:4s
-Vanilla trial 2: 3.24GB, (154s) 2m:34s
-Vanilla trial 3: 3.08GB, (160s) 2m:40s
-Vanilla trial 4: 3.09GB, (149s) 2m:29s
+Vanilla trial 1: 3.07 GB, (156s) 2m:36s
+Vanilla trial 2: 3.19 GB, (162s) 2m:42s
+Vanilla trial 3: 3.14 GB, (158s) 2m:38s
+Vanilla trial 4: 3.10 GB, (148s) 2m:28s
 ```
