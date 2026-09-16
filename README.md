@@ -18,12 +18,12 @@ swiftusd-split/.build/debug/swiftusd-split ./SwiftUsd --to ./ModularSwiftUsd
 
 ###### M5 (10 Core) Macbook Air with 16 GB memory, macOS 27.0 (26A428), Xcode 27 (beta 6), Xcode GUI
 ```swift
-Modular trial 1: 2.50GB, (315.7s) 5m:15s
-Modular trial 2: 2.32GB, (315.2s) 5m:2s
-Modular trial 3: 2.37GB, (384.0s) 6m:24s
-Modular trial 4: 2.24GB, (347.0s) 5m:47s
+Modular trial 1: 2.50 GB, (315.7s) 5m:15s
+Modular trial 2: 2.32 GB, (315.2s) 5m:2s
+Modular trial 3: 2.37 GB, (384.0s) 6m:24s
+Modular trial 4: 2.24 GB, (347.0s) 5m:47s
 
-Vanilla trial 1: 3.24GB, (970s) 16m:10s
+Vanilla trial 1: 3.24 GB, (970s) 16m:10s
 // (painfully slow while thrashing machine into OOM, todo: 3x more times)
 ```
 
