@@ -16,15 +16,16 @@ swiftusd-split/.build/debug/swiftusd-split ./SwiftUsd --to ./ModularSwiftUsd
 
 ## Current Benchmark Results
 
-###### M5 (10 Core) Macbook Air with 16 GB memory, macOS 27.0 (26A428), Xcode 27 (beta 6), SwiftPM
+###### M5 (10 Core) Macbook Air with 16 GB memory, macOS 27.0 (26A428), Xcode 27 (beta 6), Xcode GUI
 ```swift
-Modular trial 1: nGB, (426s) 7m:7s
+Modular trial 1: 2.50GB, (315.7s) 5m:15s
+Modular trial 2: 2.32GB, (315.2s) 5m:2s
+Modular trial 3: 2.37GB, (384.0s) 6m:24s
+Modular trial 4: 2.24GB, (347.0s) 5m:47s
 
-Vanilla trial 1: nGB, (970s) 16m:10s
+Vanilla trial 1: 3.24GB, (970s) 16m:10s
+// (painfully slow while thrashing machine into OOM, todo: 3x more times)
 ```
-> todo: figure out memory footprint, _"it doesn't hit OOM, is not a valid benchmark number"_.
-
-<br/>
 
 ###### M1 Max (10 core) MacBook Pro with 64 GB memory, macOS 26.5 (25F71), Xcode 26.5 (17F42), Xcode GUI
 ```swift
